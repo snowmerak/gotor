@@ -7,10 +7,12 @@ import (
 )
 
 func Generate(packageName string, actorName string, channelParameters map[string]string) []byte {
+	newChannelParameters := make(map[string]string, len(channelParameters))
 	for channelName, channelType := range channelParameters {
-		channelParameters[channelName+"Ch"] = strings.TrimSpace(channelType)
+		newChannelParameters[channelName+"Ch"] = strings.TrimSpace(channelType)
 		delete(channelParameters, channelName)
 	}
+	channelParameters = newChannelParameters
 
 	buffer := bytes.NewBuffer(nil)
 	buffer.WriteString("package " + packageName + "\n\n")
