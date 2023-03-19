@@ -7,13 +7,6 @@ import (
 )
 
 func Generate(packageName string, actorName string, channelParameters map[string]string) []byte {
-	newChannelParameters := make(map[string]string, len(channelParameters))
-	for channelName, channelType := range channelParameters {
-		newChannelParameters[channelName+"Ch"] = strings.TrimSpace(channelType)
-		delete(channelParameters, channelName)
-	}
-	channelParameters = newChannelParameters
-
 	buffer := bytes.NewBuffer(nil)
 	buffer.WriteString("package " + packageName + "\n\n")
 	buffer.WriteString("import \"context\"\n\n")
@@ -72,6 +65,14 @@ func Generate(packageName string, actorName string, channelParameters map[string
 	buffer.WriteString("func (m *" + actorName + ") Stop() {\n")
 	buffer.WriteString("\tm.cancel()\n")
 	buffer.WriteString("}\n\n")
+
+	for channelName, channelType := range channelParameters {
+		functionName := "GetSenderOf" + strings.ToUpper(channelName[:1]) + channelName[1:]
+		receiverName := strings.ToLower(actorName[:1])
+		buffer.WriteString("func (" + receiverName + " *" + actorName + ") " + functionName + "() chan<- " + channelType + " {\n")
+		buffer.WriteString("\treturn " + receiverName + "." + channelName + "\n")
+		buffer.WriteString("}\n\n")
+	}
 
 	generated := buffer.Bytes()
 	result, err := format.Source(generated)
