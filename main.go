@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/snowmerak/gotor/actor"
 	"github.com/snowmerak/gotor/config"
+	"github.com/snowmerak/gotor/directory"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
@@ -32,23 +33,12 @@ func main() {
 		encoder := yaml.NewEncoder(f)
 		encoder.SetIndent(2)
 		if err := encoder.Encode(&config.Config{
-			Actors: []struct {
-				Path        string `yaml:"path"`
-				PackageName string `yaml:"package_name"`
-				ActorName   string `yaml:"actor_name"`
-				Channels    []struct {
-					Name string `yaml:"name"`
-					Type string `yaml:"type"`
-				} `yaml:"channels"`
-			}{
+			Actors: []config.Actor{
 				{
 					Path:        filepath.Join(".", "test"),
 					PackageName: "ActorMap",
 					ActorName:   "Map",
-					Channels: []struct {
-						Name string `yaml:"name"`
-						Type string `yaml:"type"`
-					}{
+					Channels: []config.Channel{
 						{
 							Name: "get",
 							Type: "tuple.Tuple[string, chan string]",
@@ -63,6 +53,13 @@ func main() {
 						},
 					},
 				},
+			},
+			Directories: map[string]any{
+				"cmd": map[string]any{
+					"app":  nil,
+					"test": nil,
+				},
+				"src": nil,
 			},
 		}); err != nil {
 			fmt.Println(err)
@@ -81,6 +78,11 @@ func main() {
 
 		cfg := new(config.Config)
 		if err := yaml.Unmarshal(cfgData, cfg); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		if err := directory.Generate(".", cfg.Directories); err != nil {
 			fmt.Println(err)
 			return
 		}
